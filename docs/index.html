@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>試合情報</title>
+  <style>
+    /* 全画面表示、16:9のアスペクト比に合わせる */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 0px;
+      overflow: hidden;
+      background-color: #fff;
+    }
+
+    /* タブボタン */
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      background-color: #333;
+      padding: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-buttons button {
+      background-color: #444;
+      color: white;
+      padding: 10px 20px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 5px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .tab-buttons button:hover {
+      background-color: #555;
+    }
+
+    .tab-buttons button.active {
+      background-color: #007BFF;
+    }
+
+    /* タブ内容 */
+    .tab-content {
+      width: 100%;
+      height: calc(100% - 50px);
+      /* タブボタンの高さ分を除く */
+      padding: 5px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 各セクションのスタイル */
+    .section {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .section .column {
+      width: 48%;
+      background-color: #f8f8f8;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-weight: bold;
+      /* 文字を太字 */
+    }
+
+    #league-section td {
+      width: 50%;
+    }
+
+    th {
+      background-color: #f8f8f8;
+    }
+
+    /* レスポンシブデザイン */
+    @media (max-width: 768px) {
+      .tab-buttons button {
+        font-size: 14px;
+        padding: 8px 15px;
+      }
+
+      th,
+      td {
+        font-size: 14px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- タブボタン -->
+    <div class="tab-buttons">
+      <button id="league-button" class="active" onclick="switchTab('league')">リーグごとのプレイヤー</button>
+      <button id="next-match-button" onclick="switchTab('next-match')">次の試合情報</button>
+      <button id="wins-button" onclick="switchTab('wins')">勝利数ごとのプレイヤー</button>
+    </div>
+
+    <!-- タブ内容 -->
+    <div class="tab-content active" id="league-content">
+      <div class="section" id="league-section"></div>
+    </div>
+
+    <div class="tab-content" id="next-match-content">
+      <div class="section" id="next-match-section"></div>
+    </div>
+
+    <div class="tab-content" id="wins-content">
+      <div class="section" id="wins-section"></div>
+    </div>
+  </div>
+
+  <script>
+    // APIのエンドポイント
+    const SCRIPT_ID = "AKfycbwsBr8NZvuCfaCoifPtGiz02mTUQCWLVFRHqp9tRjU5CFHrRHYM3GmFWndn7UsG-XjX";
+    const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
+
+    // APIからデータを取得する関数
+    function fetchData(action) {
+      const url = new URL(apiBaseUrl);
+      url.searchParams.append('action', action);
+
+      return fetch(url)
+        .then(response => response.json())
+        .then(data => data);
+    }
+
+    // タブを切り替える関数
+    function switchTab(tab) {
+      // すべてのタブボタンからactiveクラスを外す
+      document.querySelectorAll('.tab-buttons button').forEach(button => button.classList.remove('active'));
+
+      // クリックされたボタンにactiveクラスを追加
+      document.getElementById(`${tab}-button`).classList.add('active');
+
+      // すべてのコンテンツを非表示にする
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // クリックされたタブのコンテンツを表示
+      document.getElementById(`${tab}-content`).classList.add('active');
+
+      // データを取得して表示
+      if (tab === 'league') {
+        fetchData('getLeagues').then(displayLeagues);
+      } else if (tab === 'next-match') {
+        fetchData('getNextMatches').then(displayNextMatches);
+      } else if (tab === 'wins') {
+        fetchData('getPlayersByWins').then(displayPlayersByWins);
+      }
+    }
+
+    // 各リーグのプレイヤー一覧を表示
+    function displayLeagues(data) {
+      const section = document.getElementById('league-section');
+      section.innerHTML = ''; // 既存の内容をクリア
+
+      data.forEach(league => {
+        const column = document.createElement('div');
+        column.classList.add('column');
+        const table = document.createElement('table');
+
+        const leagueRow = document.createElement('tr');
+        const leagueCell = document.createElement('td');
+        leagueCell.textContent = league.league;
+        leagueRow.appendChild(leagueCell);
+        table.appendChild(leagueRow);
+
+        for (let i = 0; i < league.players.length; i += 2) {
+          const row = document.createElement('tr');
+
+          // 1つ目のプレイヤー
+          const playerCell1 = document.createElement('td');
+          playerCell1.textContent = league.players[i];
+          row.appendChild(playerCell1);
+
+          // 2つ目のプレイヤー（i + 1 が存在する場合）
+          if (i + 1 < league.players.length) {
+            const playerCell2 = document.createElement('td');
+            playerCell2.textContent = league.players[i + 1];
+            row.appendChild(playerCell2);
+          }
+
+          // 行をテーブルに追加
+          table.appendChild(row);
+        }
+
+        column.appendChild(table);
+        section.appendChild(column);
+      });
+    }
+
+    // 次の試合情報を表示
+    function displayNextMatches(data) {
+      const section = document.getElementById('next-match-section');
+      section.innerHTML = ''; // 既存の内容をクリア
+
+      // リーグごとにテーブルを作成
+      const leagues = {}; // リーグ名をキーとして、試合のデータを格納するオブジェクト
+
+      // dataからリーグごとにデータを分類
+      data.forEach(match => {
+        // リーグ名がまだない場合、リーグ用のテーブルを作成
+        if (!leagues[match.league]) {
+          leagues[match.league] = []; // 試合データを格納するための配列を作成
+        }
+
+        // 試合データをリーグごとに追加
+        leagues[match.league].push(match);
+      });
+
+      // 各リーグごとのテーブルを作成
+      Object.keys(leagues).forEach(leagueName => {
+        const column = document.createElement('div');
+        column.classList.add('column');
+        const table = document.createElement('table');
+
+        // リーグ名を表示
+        const leagueRow = document.createElement('tr');
+        const leagueCell = document.createElement('td');
+        leagueCell.textContent = leagueName;
+        leagueRow.appendChild(leagueCell);
+        table.appendChild(leagueRow);
+
+        // 各試合の組み合わせをテーブルに追加
+        leagues[leagueName].forEach(match => {
+          const matchRow = document.createElement('tr');
+          const matchCell = document.createElement('td');
+          matchCell.textContent = `${match.player1} vs ${match.player2}`;
+          matchRow.appendChild(matchCell);
+          table.appendChild(matchRow);
+        });
+
+        // テーブルをカラムに追加
+        column.appendChild(table);
+        // セクションに追加
+        section.appendChild(column);
+      });
+
+    }
+
+    // 勝利数ごとのプレイヤーをリーグごとに表示
+    function displayPlayersByWins(data) {
+      const section = document.getElementById('wins-section');
+      section.innerHTML = ''; // 既存の内容をクリア
+
+      // リーグごとのデータを処理
+      data.forEach(leagueData => {
+        const column = document.createElement('div');
+        column.classList.add('column');
+
+        // リーグ名のテーブル作成
+        const table = document.createElement('table');
+
+        const leagueRow = document.createElement('tr');
+        const leagueCell = document.createElement('td');
+        leagueCell.textContent = leagueData.league; // リーグ名
+        leagueRow.appendChild(leagueCell);
+        table.appendChild(leagueRow);
+
+        // 勝利数ごとに並べる
+        leagueData.winsData.sort((a, b) => b.wins - a.wins); // 勝利数を降順で並べ替え
+
+        // 各勝利数に対応するプレイヤーを2列に分けて表示
+        leagueData.winsData.forEach(winData => {
+          const row = document.createElement('tr');
+
+          // 勝利数の表示
+          const winsCell = document.createElement('td');
+          winsCell.textContent = `${winData.wins} 勝`;
+          row.appendChild(winsCell);
+          table.appendChild(row);
+
+          // プレイヤーを2列で並べる
+          const playersRow = document.createElement('tr');
+
+          // 左側の列
+          const leftCell = document.createElement('td');
+          leftCell.style.width = '50%'; // 左側の列の幅を50%
+          winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach(player => {
+            const playerCell = document.createElement('p');
+            playerCell.textContent = player;
+            leftCell.appendChild(playerCell);
+          });
+
+          // 右側の列
+          const rightCell = document.createElement('td');
+          rightCell.style.width = '50%'; // 右側の列の幅を50%
+          winData.players.slice(Math.ceil(winData.players.length / 2)).forEach(player => {
+            const playerCell = document.createElement('p');
+            playerCell.textContent = player;
+            rightCell.appendChild(playerCell);
+          });
+
+          playersRow.appendChild(leftCell);
+          playersRow.appendChild(rightCell);
+          table.appendChild(playersRow);
+        });
+
+        column.appendChild(table);
+        section.appendChild(column);
+      });
+    }
+
+
+    // 初期データの取得と表示
+    window.onload = function () {
+      switchTab('league'); // 最初に表示するタブ
+    };
+  </script>
+</body>
+
+</html>

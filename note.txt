@@ -1,0 +1,2 @@
+const SCRIPT_ID = "AKfycbwsBr8NZvuCfaCoifPtGiz02mTUQCWLVFRHqp9tRjU5CFHrRHYM3GmFWndn7UsG-XjX";
+const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
