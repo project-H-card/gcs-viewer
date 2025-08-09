@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>試合情報</title>
+  <title>GCS試合情報</title>
   <style>
     /* 全画面表示、16:9のアスペクト比に合わせる */
     * {
@@ -116,6 +116,7 @@
 
     th {
       background-color: #f8f8f8;
+      color: orangered;
     }
 
     /* レスポンシブデザイン */
@@ -138,9 +139,11 @@
   <div class="container">
     <!-- タブボタン -->
     <div class="tab-buttons">
-      <button id="league-button" class="active" onclick="switchTab('league')">リーグごとのプレイヤー</button>
-      <button id="next-match-button" onclick="switchTab('next-match')">次の試合情報</button>
-      <button id="wins-button" onclick="switchTab('wins')">勝利数ごとのプレイヤー</button>
+      <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
+      <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
+      <button id="wins-button" onclick="switchTab('wins')">勝利数</button>
+      <button id="revival-match-button" onclick="switchTab('revival-match')">復活試合</button>
+      <button id="revival-wins-button" onclick="switchTab('revival-wins')">復活勝利数</button>
     </div>
 
     <!-- タブ内容 -->
@@ -155,11 +158,19 @@
     <div class="tab-content" id="wins-content">
       <div class="section" id="wins-section"></div>
     </div>
+
+    <div class="tab-content" id="revival-match-content">
+      <div class="section" id="revival-match-section"></div>
+    </div>
+
+    <div class="tab-content" id="revival-wins-content">
+      <div class="section" id="revival-wins-section"></div>
+    </div>
   </div>
 
   <script>
     // APIのエンドポイント
-    const SCRIPT_ID = "AKfycbwsBr8NZvuCfaCoifPtGiz02mTUQCWLVFRHqp9tRjU5CFHrRHYM3GmFWndn7UsG-XjX";
+    const SCRIPT_ID = "AKfycbzN8K30zDAzY9NUUEsIEFVAN-emQRsnJfA545khnKdFTzpcPjNn0H6SPtZMFBguty4G";
     const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
 
     // APIからデータを取得する関数
@@ -174,25 +185,21 @@
 
     // タブを切り替える関数
     function switchTab(tab) {
-      // すべてのタブボタンからactiveクラスを外す
       document.querySelectorAll('.tab-buttons button').forEach(button => button.classList.remove('active'));
-
-      // クリックされたボタンにactiveクラスを追加
       document.getElementById(`${tab}-button`).classList.add('active');
-
-      // すべてのコンテンツを非表示にする
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-      // クリックされたタブのコンテンツを表示
       document.getElementById(`${tab}-content`).classList.add('active');
 
-      // データを取得して表示
       if (tab === 'league') {
         fetchData('getLeagues').then(displayLeagues);
       } else if (tab === 'next-match') {
         fetchData('getNextMatches').then(displayNextMatches);
       } else if (tab === 'wins') {
         fetchData('getPlayersByWins').then(displayPlayersByWins);
+      } else if (tab === 'revival-match') {
+        fetchData('getNextRevivalMatches').then(displayRevivalMatches);
+      } else if (tab === 'revival-wins') {
+        fetchData('getRevivalPlayersByWin').then(displayRevivalPlayersByWins);
       }
     }
 
@@ -347,6 +354,105 @@
         section.appendChild(column);
       });
     }
+
+
+    function displayRevivalMatches(data) {
+      const section = document.getElementById('revival-match-section');
+      section.innerHTML = '';
+
+      // データを半分に分ける
+      const halfLength = Math.ceil(data.length / 2);
+      const firstHalf = data.slice(0, halfLength);
+      const secondHalf = data.slice(halfLength);
+
+      // 2つのカラムを一度に処理
+      [firstHalf, secondHalf].forEach((half, index) => {
+        const column = document.createElement('div');
+        column.classList.add('column');
+        const table = document.createElement('table');
+
+        const leagueRow = document.createElement('tr');
+        const leagueCell = document.createElement('td');
+        leagueCell.textContent = '敗者復活';  // テキストは共通
+        leagueRow.appendChild(leagueCell);
+        table.appendChild(leagueRow);
+
+        half.forEach(match => {
+          const matchRow = document.createElement('tr');
+          const matchCell = document.createElement('td');
+          matchCell.textContent = `${match.player1} vs ${match.player2}`;
+          matchRow.appendChild(matchCell);
+          table.appendChild(matchRow);
+        });
+
+        column.appendChild(table);
+        section.appendChild(column);
+      });
+    }
+
+
+
+    function displayRevivalPlayersByWins(data) {
+      console.log(data);
+      const section = document.getElementById('revival-wins-section');
+      section.innerHTML = '';
+
+      // ウィンデータをソート
+      const revivalData = data[0].winsData;
+      revivalData.sort((a, b) => b.wins - a.wins);
+
+      // データを半分に分ける
+      const halfLength = Math.ceil(revivalData.length / 2);
+      const firstHalf = revivalData.slice(0, halfLength);
+      const secondHalf = revivalData.slice(halfLength);
+
+      // 2つのカラムを一度に処理
+      [firstHalf, secondHalf].forEach((half, index) => {
+        const column = document.createElement('div');
+        column.classList.add('column');
+        const table = document.createElement('table');
+
+        const leagueRow = document.createElement('tr');
+        const leagueCell = document.createElement('td');
+        leagueCell.textContent = '敗者復活';  // テキストは共通
+        leagueRow.appendChild(leagueCell);
+        table.appendChild(leagueRow);
+
+        half.forEach(winData => {
+          const row = document.createElement('tr');
+
+          const winsCell = document.createElement('td');
+          winsCell.textContent = `${winData.wins} 勝`;
+          row.appendChild(winsCell);
+          table.appendChild(row);
+
+          const playersRow = document.createElement('tr');
+          const leftCell = document.createElement('td');
+          leftCell.style.width = '50%';
+          winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach(player => {
+            const playerCell = document.createElement('p');
+            playerCell.textContent = player;
+            leftCell.appendChild(playerCell);
+          });
+
+          const rightCell = document.createElement('td');
+          rightCell.style.width = '50%';
+          winData.players.slice(Math.ceil(winData.players.length / 2)).forEach(player => {
+            const playerCell = document.createElement('p');
+            playerCell.textContent = player;
+            rightCell.appendChild(playerCell);
+          });
+
+          playersRow.appendChild(leftCell);
+          playersRow.appendChild(rightCell);
+          table.appendChild(playersRow);
+        });
+
+        column.appendChild(table);
+        section.appendChild(column);
+      });
+    }
+
 
 
     // 初期データの取得と表示
