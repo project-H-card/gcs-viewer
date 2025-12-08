@@ -18,22 +18,23 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #f4f4f4;
+        background-color: #fff;
       }
 
       .container {
         width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        padding: 0px;
+        padding: 10px;
         overflow: hidden;
         background-color: #fff;
       }
 
-      /* タブボタン */
       .tab-buttons {
         display: flex;
         justify-content: center;
@@ -63,12 +64,10 @@
         background-color: #007bff;
       }
 
-      /* タブ内容 */
       .tab-content {
         width: 100%;
         height: calc(100% - 50px);
-        /* タブボタンの高さ分を除く */
-        padding: 5px;
+        padding: 20px 0;
         overflow-y: auto;
         display: none;
       }
@@ -77,7 +76,6 @@
         display: block;
       }
 
-      /* 各セクションのスタイル */
       .section {
         display: flex;
         justify-content: space-between;
@@ -88,6 +86,8 @@
 
       .section .column {
         width: 48%;
+        max-width: 600px;
+        margin: 10px auto;
         background-color: #f8f8f8;
         padding: 15px;
         border-radius: 8px;
@@ -106,7 +106,6 @@
         border: 1px solid #ddd;
         text-align: left;
         font-weight: bold;
-        /* 文字を太字 */
       }
 
       #league-section td {
@@ -118,7 +117,11 @@
         color: orangered;
       }
 
-      /* レスポンシブデザイン */
+      .column h2 {
+        margin-bottom: 10px;
+        margin-top: 10px;
+      }
+
       @media (max-width: 768px) {
         .tab-buttons button {
           font-size: 14px;
@@ -162,19 +165,51 @@
       </div>
     </div>
 
+    <div
+      id="loading"
+      style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #007bff;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        display: none;
+      "
+    ></div>
+
+    <style>
+      @keyframes spin {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+    </style>
+
     <script>
       // APIのエンドポイント
-      const SCRIPT_ID = 'AKfycbw7UMavtLLjHsx25g2cc-frDM1qSvzV19Tl9e3_RkO9hALnxbuIxTQTWI9zca73WYRQ0A';
+      const SCRIPT_ID = 'AKfycbz3Lhh7-5Pq8g6MDwE9rShMjra4ocXnEixfnuthh8vWjj11_CcHLW3k7JU96MQgUY9Gtw';
       const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
 
-      // APIからデータを取得する関数
       function fetchData(action) {
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+
         const url = new URL(apiBaseUrl);
         url.searchParams.append('action', action);
 
         return fetch(url)
           .then((response) => response.json())
-          .then((data) => data);
+          .finally(() => {
+            loading.style.display = 'none';
+          });
       }
 
       // タブを切り替える関数
@@ -186,7 +221,7 @@
 
         if (tab === 'league') fetchData('getLeagues').then(displayLeagues);
         if (tab === 'next-match') fetchData('getNextMatches').then(displayNextMatches);
-        if (tab === 'final') fetchData('getFinalTournament').then(displayFinal);
+        if (tab === 'final') fetchData('getFinalTournament').then(displayFinalTournament);
         if (tab === 'total') fetchData('getTotalRanking').then(displayTotalRanking);
       }
 
