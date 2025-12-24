@@ -1,319 +1,199 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GCS試合情報</title>
-    <style>
-      /* 全画面表示、16:9のアスペクト比に合わせる */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
 
-      body {
-        font-family: Arial, sans-serif;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #fff;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ハイストリーグ試合情報</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
 
-      .container {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        padding: 10px;
-        overflow: hidden;
-        background-color: #fff;
-      }
-
-      .tab-buttons {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        background-color: #333;
-        padding: 10px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      .tab-buttons button {
-        background-color: #444;
-        color: white;
-        padding: 10px 20px;
-        margin: 0 5px;
-        border: none;
-        border-radius: 5px;
-        font-size: 18px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-      }
-
-      .tab-buttons button:hover {
-        background-color: #555;
-      }
-
-      .tab-buttons button.active {
-        background-color: #007bff;
-      }
-
-      .tab-content {
-        width: 100%;
-        height: calc(100% - 50px);
-        padding: 20px 0;
-        overflow-y: auto;
-        display: none;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-
-      .section {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        width: 100%;
-        margin: 10px 0;
-      }
-
-      .section .column {
-        width: 48%;
-        max-width: 600px;
-        margin: 10px auto;
-        background-color: #f8f8f8;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 2px;
-      }
-
-      th,
-      td {
-        padding: 10px;
-        border: 1px solid #ddd;
-        text-align: left;
-        font-weight: bold;
-      }
-
-      #league-section td {
-        width: 50%;
-      }
-
-      th {
-        background-color: #f8f8f8;
-        color: orangered;
-      }
-
-      .column h2 {
-        margin-bottom: 10px;
-        margin-top: 10px;
-      }
-
-      @media (max-width: 768px) {
-        .tab-buttons button {
-          font-size: 14px;
-          padding: 8px 15px;
-        }
-
-        th,
-        td {
-          font-size: 14px;
-          padding: 8px;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="container">
-      <!-- タブボタン -->
-      <div class="tab-buttons">
-        <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
-        <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
-        <button id="final-button" onclick="switchTab('final')">決勝</button>
-        <button id="total-button" onclick="switchTab('total')">総合表彰</button>
-      </div>
-
-      <!-- タブ内容 -->
-      <div class="tab-content active" id="league-content">
-        <div id="league-section"></div>
-      </div>
-
-      <div class="tab-content" id="next-match-content">
-        <div id="next-match-section"></div>
-      </div>
-
-      <div class="tab-content" id="final-content">
-        <div id="final-section"></div>
-      </div>
-
-      <div class="tab-content" id="total-content">
-        <div id="total-section"></div>
-      </div>
+<body>
+  <div class="container">
+    <!-- タブボタン -->
+    <div class="tab-buttons">
+      <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
+      <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
+      <button id="final-button" onclick="switchTab('final')">決勝</button>
+      <button id="total-button" onclick="switchTab('total')">総合表彰</button>
     </div>
 
-    <div
-      id="loading"
-      style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border: 8px solid #f3f3f3;
-        border-top: 8px solid #007bff;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        animation: spin 1s linear infinite;
-        display: none;
-      "
-    ></div>
+    <!-- タブ内容 -->
+    <div class="tab-content active" id="league-content">
+      <div id="league-section" class="section"></div>
+    </div>
 
-    <style>
-      @keyframes spin {
-        0% {
-          transform: translate(-50%, -50%) rotate(0deg);
-        }
-        100% {
-          transform: translate(-50%, -50%) rotate(360deg);
-        }
-      }
-    </style>
+    <div class="tab-content" id="next-match-content">
+      <div id="next-match-section" class="section"></div>
+    </div>
 
-    <script>
-      // APIのエンドポイント
-      const SCRIPT_ID = 'AKfycbz3Lhh7-5Pq8g6MDwE9rShMjra4ocXnEixfnuthh8vWjj11_CcHLW3k7JU96MQgUY9Gtw';
-      const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
+    <div class="tab-content" id="final-content">
+      <div id="final-section" class="section"></div>
+    </div>
 
-      function fetchData(action) {
-        const loading = document.getElementById('loading');
-        loading.style.display = 'block';
+    <div class="tab-content" id="total-content">
+      <div id="total-section"></div>
+    </div>
+  </div>
 
-        const url = new URL(apiBaseUrl);
-        url.searchParams.append('action', action);
+  <div id="loading">
+    <div id="loadingCircle"></div>
+  </div>
 
-        return fetch(url)
-          .then((response) => response.json())
-          .finally(() => {
-            loading.style.display = 'none';
-          });
-      }
 
-      // タブを切り替える関数
-      function switchTab(tab) {
-        document.querySelectorAll('.tab-buttons button').forEach((button) => button.classList.remove('active'));
-        document.getElementById(`${tab}-button`).classList.add('active');
-        document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
-        document.getElementById(`${tab}-content`).classList.add('active');
+  <script>
+    const apiBaseUrl = "https://script.google.com/macros/s/AKfycbyAR8jQYkOgMWlMVkoJDFbv3r9wLvXadD_PS4ckDNrYt-1YRFbH54p2jrkRrHovELK6cQ/exec";
 
-        if (tab === 'league') fetchData('getLeagues').then(displayLeagues);
-        if (tab === 'next-match') fetchData('getNextMatches').then(displayNextMatches);
-        if (tab === 'final') fetchData('getFinalTournament').then(displayFinalTournament);
-        if (tab === 'total') fetchData('getTotalRanking').then(displayTotalRanking);
-      }
+    function fetchData(action) {
+      const loading = document.getElementById('loading');
+      loading.style.display = "flex";
 
-      function displayLeagues(data) {
-        const section = document.getElementById('league-section');
-        section.innerHTML = '';
+      const url = new URL(apiBaseUrl);
+      url.searchParams.append('action', action);
 
-        data.forEach((league) => {
-          const col = document.createElement('div');
-          col.classList.add('column');
-
-          const title = document.createElement('h2');
-          title.textContent = `${league.league}リーグ`;
-          col.appendChild(title);
-
-          const table = document.createElement('table');
-          table.innerHTML = `
-      <tr>
-        <th>順位</th>
-        <th>チーム</th>
-        <th>総合</th>
-        <th>予選</th>
-        <th>勝ち数</th>
-      </tr>
-    `;
-
-          league.teams.forEach((t, index) => {
-            table.innerHTML += `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${t.teamName}</td>
-          <td>${t.totalPoint}</td>
-          <td>${t.prelimPoint}</td>
-          <td>${t.wins}</td>
-        </tr>
-      `;
-          });
-
-          col.appendChild(table);
-          section.appendChild(col);
+      return fetch(url)
+        .then((response) => response.json())
+        .finally(() => {
+          loading.style.display = 'none';
         });
-      }
+    }
 
-      function displayNextMatches(data) {
-        const section = document.getElementById('next-match-section');
-        section.innerHTML = '';
+    // タブを切り替える関数
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-buttons button').forEach((button) => button.classList.remove('active'));
+      document.getElementById(`${tab}-button`).classList.add('active');
+      document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+      document.getElementById(`${tab}-content`).classList.add('active');
 
-        const leagues = {};
-        data.forEach((m) => {
-          if (!leagues[m.league]) leagues[m.league] = [];
-          leagues[m.league].push(m);
-        });
+      if (tab === 'league') fetchData('getLeagues').then(displayLeagues);
+      if (tab === 'next-match') fetchData('getNextMatches').then(displayNextMatches);
+      if (tab === 'final') fetchData('getFinalTournament').then(displayFinalTournament);
+      if (tab === 'total') fetchData('getTotalRanking').then(displayTotalRanking);
+    }
 
-        Object.keys(leagues).forEach((lg) => {
-          const col = document.createElement('div');
-          col.classList.add('column');
+    function displayLeagues(leagues) {
+      const section = document.getElementById("league-section");
+      section.innerHTML = "";
 
-          const title = document.createElement('h2');
-          title.textContent = `${lg}リーグ 次の試合`;
-          col.appendChild(title);
+      leagues.forEach(league => {
+        section.appendChild(createLeagueColumn(league));
+      });
+    }
 
-          const table = document.createElement('table');
+    function createLeagueColumn(league) {
+      const column = document.createElement("div");
+      column.className = "column";
 
-          leagues[lg].forEach((m) => {
-            table.innerHTML += `
+      column.appendChild(createTitle(`${league.league}リーグ`));
+      column.appendChild(createLeagueTable(league.teams));
+
+      return column;
+    }
+
+    function createTitle(text) {
+      const h2 = document.createElement("h2");
+      h2.textContent = text;
+      return h2;
+    }
+
+    function createLeagueTable(teams) {
+      const table = document.createElement("table");
+      table.appendChild(createTableHeader());
+      table.appendChild(createTableBody(teams));
+      return table;
+    }
+
+    function createTableHeader() {
+      const thead = document.createElement("thead");
+      thead.innerHTML = `
+    <tr>
+      <th>順位</th>
+      <th>チーム</th>
+      <th>総合</th>
+      <th>予選</th>
+      <th>勝ち数</th>
+    </tr>
+  `;
+      return thead;
+    }
+
+    function createTableBody(teams) {
+      const tbody = document.createElement("tbody");
+
+      teams.forEach((team, index) => {
+        const row = document.createElement("tr");
+
+        row.appendChild(createCell(index + 1));
+        row.appendChild(createCell(team.teamName));
+        row.appendChild(createCell(team.totalPoint));
+        row.appendChild(createCell(team.prelimPoint));
+        row.appendChild(createCell(team.wins));
+
+        tbody.appendChild(row);
+      });
+
+      return tbody;
+    }
+
+    function createCell(value) {
+      const td = document.createElement("td");
+      td.textContent = value ?? "";
+      return td;
+    }
+
+
+    function displayNextMatches(data) {
+      const section = document.getElementById('next-match-section');
+      section.innerHTML = '';
+
+      const leagues = {};
+      data.forEach((m) => {
+        if (!leagues[m.league]) leagues[m.league] = [];
+        leagues[m.league].push(m);
+      });
+      let tableNumber = 1;
+
+      Object.keys(leagues).forEach((lg) => {
+        const col = document.createElement('div');
+        col.classList.add('column');
+
+        const title = document.createElement('h2');
+        title.textContent = `${lg}リーグ 次の試合`;
+        col.appendChild(title);
+
+        const table = document.createElement('table');
+
+        leagues[lg].forEach((m) => {
+          table.innerHTML += `
         <tr>
+          <th>${tableNumber}</th>
           <td>${m.team1Name}</td>
           <td>vs</td>
           <td>${m.team2Name}</td>
         </tr>
       `;
-          });
-
-          col.appendChild(table);
-          section.appendChild(col);
+          tableNumber++;
         });
-      }
 
-      function displayFinalTournament(data) {
-        const section = document.getElementById('final-content');
-        section.innerHTML = '';
+        col.appendChild(table);
+        section.appendChild(col);
+      });
+    }
 
-        data.forEach((match) => {
-          const col = document.createElement('div');
-          col.classList.add('column');
+    function displayFinalTournament(data) {
+      const section = document.getElementById('final-section');
+      section.innerHTML = '';
 
-          const title = document.createElement('h2');
-          title.textContent = match.matchType;
-          col.appendChild(title);
+      data.forEach((match) => {
+        const col = document.createElement('div');
+        col.classList.add('column');
 
-          const table = document.createElement('table');
-          table.innerHTML += `
+        const title = document.createElement('h2');
+        title.textContent = match.matchType;
+        col.appendChild(title);
+
+        const table = document.createElement('table');
+        table.innerHTML += `
       <tr>
         <td>${match.team1Name}</td>
         <td>vs</td>
@@ -321,32 +201,32 @@
       </tr>
     `;
 
-          if (match.winnerName) {
-            table.innerHTML += `
+        if (match.winnerName) {
+          table.innerHTML += `
         <tr>
           <th colspan="3">勝者：${match.winnerName}</th>
         </tr>
       `;
-          }
+        }
 
-          col.appendChild(table);
-          section.appendChild(col);
-        });
-      }
+        col.appendChild(table);
+        section.appendChild(col);
+      });
+    }
 
-      function displayTotalRanking(data) {
-        const section = document.getElementById('total-section');
-        section.innerHTML = '';
+    function displayTotalRanking(data) {
+      const section = document.getElementById('total-section');
+      section.innerHTML = '';
 
-        const col = document.createElement('div');
-        col.classList.add('column');
+      const col = document.createElement('div');
+      col.classList.add('column');
 
-        const title = document.createElement('h2');
-        title.textContent = '総合表彰';
-        col.appendChild(title);
+      const title = document.createElement('h2');
+      title.textContent = '総合表彰';
+      col.appendChild(title);
 
-        const table = document.createElement('table');
-        table.innerHTML = `
+      const table = document.createElement('table');
+      table.innerHTML = `
     <tr>
       <th>順位</th>
       <th>チーム</th>
@@ -354,24 +234,25 @@
     </tr>
   `;
 
-        data.forEach((t) => {
-          table.innerHTML += `
+      data.forEach((t) => {
+        table.innerHTML += `
       <tr>
         <td>${t.rank}</td>
         <td>${t.teamName}</td>
         <td>${t.totalPoint}</td>
       </tr>
     `;
-        });
+      });
 
-        col.appendChild(table);
-        section.appendChild(col);
-      }
+      col.appendChild(table);
+      section.appendChild(col);
+    }
 
-      // 初期データの取得と表示
-      window.onload = function () {
-        switchTab('league'); // 最初に表示するタブ
-      };
-    </script>
-  </body>
+    // 初期データの取得と表示
+    window.onload = function () {
+      switchTab('league'); // 最初に表示するタブ
+    };
+  </script>
+</body>
+
 </html>
