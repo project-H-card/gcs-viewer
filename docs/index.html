@@ -1,111 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ハイストリーグ試合情報</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ハイストリーグ試合情報</title>
-  <link rel="stylesheet" href="./style.css" />
-</head>
+  <body>
+    <div class="container">
+      <!-- タブボタン -->
+      <div class="tab-buttons">
+        <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
+        <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
+        <button id="final-button" onclick="switchTab('final')">決勝</button>
+        <button id="stats-button" onclick="switchTab('stats')">成績ページ</button>
+      </div>
 
-<body>
-  <div class="container">
-    <!-- タブボタン -->
-    <div class="tab-buttons">
-      <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
-      <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
-      <button id="final-button" onclick="switchTab('final')">決勝</button>
-      <button id="total-button" onclick="switchTab('total')">総合表彰</button>
+      <!-- タブ内容 -->
+      <div class="tab-content active" id="league-content">
+        <div id="league-section" class="section"></div>
+      </div>
+
+      <div class="tab-content" id="next-match-content">
+        <div id="next-match-section" class="section"></div>
+      </div>
+
+      <div class="tab-content" id="final-content">
+        <div id="final-section" class="section"></div>
+      </div>
+
+      <div class="tab-content" id="stats-content">
+        <div id="stats-section" class="section"></div>
+      </div>
+
     </div>
 
-    <!-- タブ内容 -->
-    <div class="tab-content active" id="league-content">
-      <div id="league-section" class="section"></div>
+    <div id="loading">
+      <div id="loadingCircle"></div>
     </div>
 
-    <div class="tab-content" id="next-match-content">
-      <div id="next-match-section" class="section"></div>
-    </div>
+    <script>
+      const gasUrl =
+        'https://script.google.com/macros/s/AKfycbwbv_Du-wRW5fWPgzBcgAoLL7r5N9HQiJN-c_OG-N-QLxdJrrmBJOCJ8KIERY-Dejk5/exec';
+      const isLocalDevHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+      const apiBaseUrl = isLocalDevHost ? '/api' : gasUrl;
 
-    <div class="tab-content" id="final-content">
-      <div id="final-section" class="section"></div>
-    </div>
+      function fetchData(action) {
+        const loading = document.getElementById('loading');
+        loading.style.display = 'flex';
 
-    <div class="tab-content" id="total-content">
-      <div id="total-section"></div>
-    </div>
-  </div>
+        const url = new URL(apiBaseUrl, window.location.href);
+        url.searchParams.append('action', action);
 
-  <div id="loading">
-    <div id="loadingCircle"></div>
-  </div>
+        return fetch(url)
+          .then(async (response) => {
+            const contentType = response.headers.get('content-type') || '';
+            const raw = await response.text();
 
+            if (!response.ok) {
+              throw new Error(`API Error ${response.status}: ${raw.slice(0, 200)}`);
+            }
 
-  <script>
-    const apiBaseUrl = "https://script.google.com/macros/s/AKfycbyAR8jQYkOgMWlMVkoJDFbv3r9wLvXadD_PS4ckDNrYt-1YRFbH54p2jrkRrHovELK6cQ/exec";
+            if (!contentType.includes('application/json')) {
+              throw new Error(`Expected JSON but got "${contentType}": ${raw.slice(0, 200)}`);
+            }
 
-    function fetchData(action) {
-      const loading = document.getElementById('loading');
-      loading.style.display = "flex";
+            return JSON.parse(raw);
+          })
+          .finally(() => {
+            loading.style.display = 'none';
+          });
+      }
 
-      const url = new URL(apiBaseUrl);
-      url.searchParams.append('action', action);
+      // タブを切り替える関数
+      function switchTab(tab) {
+        document.querySelectorAll('.tab-buttons button').forEach((button) => button.classList.remove('active'));
+        document.getElementById(`${tab}-button`).classList.add('active');
+        document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+        document.getElementById(`${tab}-content`).classList.add('active');
 
-      return fetch(url)
-        .then((response) => response.json())
-        .finally(() => {
-          loading.style.display = 'none';
+        if (tab === 'league') fetchData('getLeagues').then(displayLeagues);
+        if (tab === 'next-match') fetchData('getNextMatches').then(displayNextMatches);
+        if (tab === 'final') fetchData('getFinalTournament').then(displayFinalTournament);
+        if (tab === 'stats') fetchData('getLeagues').then(displayStats);
+      }
+
+      function displayLeagues(leagues) {
+        const section = document.getElementById('league-section');
+        section.innerHTML = '';
+
+        leagues.forEach((league) => {
+          section.appendChild(createLeagueTeamListColumn(league));
         });
-    }
+      }
 
-    // タブを切り替える関数
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-buttons button').forEach((button) => button.classList.remove('active'));
-      document.getElementById(`${tab}-button`).classList.add('active');
-      document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
-      document.getElementById(`${tab}-content`).classList.add('active');
+      function createLeagueTeamListColumn(league) {
+        const column = document.createElement('div');
+        column.className = 'column team-list-column';
 
-      if (tab === 'league') fetchData('getLeagues').then(displayLeagues);
-      if (tab === 'next-match') fetchData('getNextMatches').then(displayNextMatches);
-      if (tab === 'final') fetchData('getFinalTournament').then(displayFinalTournament);
-      if (tab === 'total') fetchData('getTotalRanking').then(displayTotalRanking);
-    }
+        column.appendChild(createTitle(`${league.league}リーグ`));
+        column.appendChild(createLeagueTeamList(league.teams));
 
-    function displayLeagues(leagues) {
-      const section = document.getElementById("league-section");
-      section.innerHTML = "";
+        return column;
+      }
 
-      leagues.forEach(league => {
-        section.appendChild(createLeagueColumn(league));
-      });
-    }
+      function createLeagueTeamList(teams) {
+        const list = document.createElement('ol');
+        list.className = 'team-list';
 
-    function createLeagueColumn(league) {
-      const column = document.createElement("div");
-      column.className = "column";
+        teams.forEach((team) => {
+          const li = document.createElement('li');
+          li.textContent = team.teamId;
+          list.appendChild(li);
+        });
 
-      column.appendChild(createTitle(`${league.league}リーグ`));
-      column.appendChild(createLeagueTable(league.teams));
+        return list;
+      }
 
-      return column;
-    }
+      function createTitle(text) {
+        const h2 = document.createElement('h2');
+        h2.textContent = text;
+        return h2;
+      }
 
-    function createTitle(text) {
-      const h2 = document.createElement("h2");
-      h2.textContent = text;
-      return h2;
-    }
+      function createLeagueTable(teams) {
+        const table = document.createElement('table');
+        table.appendChild(createTableHeader());
+        table.appendChild(createTableBody(teams));
+        return table;
+      }
 
-    function createLeagueTable(teams) {
-      const table = document.createElement("table");
-      table.appendChild(createTableHeader());
-      table.appendChild(createTableBody(teams));
-      return table;
-    }
-
-    function createTableHeader() {
-      const thead = document.createElement("thead");
-      thead.innerHTML = `
+      function createTableHeader() {
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
     <tr>
       <th>順位</th>
       <th>チーム</th>
@@ -114,145 +142,128 @@
       <th>勝ち数</th>
     </tr>
   `;
-      return thead;
-    }
+        return thead;
+      }
 
-    function createTableBody(teams) {
-      const tbody = document.createElement("tbody");
+      function createTableBody(teams) {
+        const tbody = document.createElement('tbody');
 
-      teams.forEach((team, index) => {
-        const row = document.createElement("tr");
+        teams.forEach((team, index) => {
+          const row = document.createElement('tr');
 
-        row.appendChild(createCell(index + 1));
-        row.appendChild(createCell(team.teamName));
-        row.appendChild(createCell(team.totalPoint));
-        row.appendChild(createCell(team.prelimPoint));
-        row.appendChild(createCell(team.wins));
+          row.appendChild(createCell(index + 1));
+          row.appendChild(createCell(team.teamId));
+          row.appendChild(createCell(team.totalPoint));
+          row.appendChild(createCell(team.prelimPoint));
+          row.appendChild(createCell(team.wins));
 
-        tbody.appendChild(row);
-      });
-
-      return tbody;
-    }
-
-    function createCell(value) {
-      const td = document.createElement("td");
-      td.textContent = value ?? "";
-      return td;
-    }
-
-
-    function displayNextMatches(data) {
-      const section = document.getElementById('next-match-section');
-      section.innerHTML = '';
-
-      const leagues = {};
-      data.forEach((m) => {
-        if (!leagues[m.league]) leagues[m.league] = [];
-        leagues[m.league].push(m);
-      });
-      let tableNumber = 1;
-
-      Object.keys(leagues).forEach((lg) => {
-        const col = document.createElement('div');
-        col.classList.add('column');
-
-        const title = document.createElement('h2');
-        title.textContent = `${lg}リーグ 次の試合`;
-        col.appendChild(title);
-
-        const table = document.createElement('table');
-
-        leagues[lg].forEach((m) => {
-          table.innerHTML += `
-        <tr>
-          <th>${tableNumber}</th>
-          <td>${m.team1Name}</td>
-          <td>vs</td>
-          <td>${m.team2Name}</td>
-        </tr>
-      `;
-          tableNumber++;
+          tbody.appendChild(row);
         });
 
-        col.appendChild(table);
-        section.appendChild(col);
-      });
-    }
+        return tbody;
+      }
 
-    function displayFinalTournament(data) {
-      const section = document.getElementById('final-section');
-      section.innerHTML = '';
+      function createCell(value) {
+        const td = document.createElement('td');
+        td.textContent = value ?? '';
+        return td;
+      }
 
-      data.forEach((match) => {
-        const col = document.createElement('div');
-        col.classList.add('column');
+      function displayStats(leagues) {
+        const section = document.getElementById('stats-section');
+        section.innerHTML = '';
 
-        const title = document.createElement('h2');
-        title.textContent = match.matchType;
-        col.appendChild(title);
+        leagues.forEach((league) => {
+          section.appendChild(createStatsColumn(league));
+        });
+      }
 
-        const table = document.createElement('table');
-        table.innerHTML += `
-      <tr>
-        <td>${match.team1Name}</td>
-        <td>vs</td>
-        <td>${match.team2Name}</td>
-      </tr>
-    `;
+      function createStatsColumn(league) {
+        const column = document.createElement('div');
+        column.className = 'column';
 
-        if (match.winnerName) {
-          table.innerHTML += `
+        column.appendChild(createTitle(`${league.league}リーグ`));
+        column.appendChild(createLeagueTable(league.teams));
+
+        return column;
+      }
+
+      function displayNextMatches(data) {
+        const section = document.getElementById('next-match-section');
+        section.innerHTML = '';
+
+        const leagues = {};
+        data.forEach((m) => {
+          if (!leagues[m.league]) leagues[m.league] = [];
+          leagues[m.league].push(m);
+        });
+        let tableNumber = 1;
+
+        Object.keys(leagues).forEach((lg) => {
+          const col = document.createElement('div');
+          col.classList.add('column');
+
+          const title = document.createElement('h2');
+          title.textContent = `${lg}リーグ 次の試合`;
+          col.appendChild(title);
+
+          const table = document.createElement('table');
+
+          leagues[lg].forEach((m) => {
+            table.innerHTML += `
         <tr>
-          <th colspan="3">勝者：${match.winnerName}</th>
-        </tr>
-      `;
-        }
+          <th>${tableNumber}</th>
+                <td>${m.team1Id}</td>
+                <td>vs</td>
+                <td>${m.team2Id}</td>
+              </tr>
+            `;
+            tableNumber++;
+          });
 
-        col.appendChild(table);
-        section.appendChild(col);
-      });
-    }
+          col.appendChild(table);
+          section.appendChild(col);
+        });
+      }
 
-    function displayTotalRanking(data) {
-      const section = document.getElementById('total-section');
-      section.innerHTML = '';
+      function displayFinalTournament(data) {
+        const section = document.getElementById('final-section');
+        section.innerHTML = '';
 
-      const col = document.createElement('div');
-      col.classList.add('column');
+        data.forEach((match) => {
+          const col = document.createElement('div');
+          col.classList.add('column');
 
-      const title = document.createElement('h2');
-      title.textContent = '総合表彰';
-      col.appendChild(title);
+          const title = document.createElement('h2');
+          title.textContent = match.matchType;
+          col.appendChild(title);
 
-      const table = document.createElement('table');
-      table.innerHTML = `
-    <tr>
-      <th>順位</th>
-      <th>チーム</th>
-      <th>総合ポイント</th>
-    </tr>
-  `;
-
-      data.forEach((t) => {
-        table.innerHTML += `
+          const table = document.createElement('table');
+          table.innerHTML += `
       <tr>
-        <td>${t.rank}</td>
-        <td>${t.teamName}</td>
-        <td>${t.totalPoint}</td>
-      </tr>
-    `;
-      });
+              <td>${match.team1Id}</td>
+              <td>vs</td>
+              <td>${match.team2Id}</td>
+            </tr>
+          `;
 
-      col.appendChild(table);
-      section.appendChild(col);
-    }
+          if (match.winnerId) {
+            table.innerHTML += `
+              <tr>
+                <th colspan="3">勝者：${match.winnerId}</th>
+              </tr>
+            `;
+          }
 
-    // 初期データの取得と表示
-    window.onload = function () {
-      switchTab('league'); // 最初に表示するタブ
-    };
-  </script>
-</body>
+          col.appendChild(table);
+          section.appendChild(col);
+        });
+      }
 
+      // 初期データの取得と表示
+      window.onload = function () {
+        switchTab('league'); // 最初に表示するタブ
+      };
+    </script>
+  </body>
 </html>
