@@ -33,7 +33,6 @@
       <div class="tab-content" id="stats-content">
         <div id="stats-section" class="section"></div>
       </div>
-
     </div>
 
     <div id="loading">
@@ -41,33 +40,18 @@
     </div>
 
     <script>
-      const gasUrl =
-        'https://script.google.com/macros/s/AKfycbwbv_Du-wRW5fWPgzBcgAoLL7r5N9HQiJN-c_OG-N-QLxdJrrmBJOCJ8KIERY-Dejk5/exec';
-      const isLocalDevHost = ['localhost', '127.0.0.1'].includes(location.hostname);
-      const apiBaseUrl = isLocalDevHost ? '/api' : gasUrl;
+      const apiBaseUrl =
+        'https://script.google.com/macros/s/AKfycbyAR8jQYkOgMWlMVkoJDFbv3r9wLvXadD_PS4ckDNrYt-1YRFbH54p2jrkRrHovELK6cQ/exec';
 
       function fetchData(action) {
         const loading = document.getElementById('loading');
         loading.style.display = 'flex';
 
-        const url = new URL(apiBaseUrl, window.location.href);
+        const url = new URL(apiBaseUrl);
         url.searchParams.append('action', action);
 
         return fetch(url)
-          .then(async (response) => {
-            const contentType = response.headers.get('content-type') || '';
-            const raw = await response.text();
-
-            if (!response.ok) {
-              throw new Error(`API Error ${response.status}: ${raw.slice(0, 200)}`);
-            }
-
-            if (!contentType.includes('application/json')) {
-              throw new Error(`Expected JSON but got "${contentType}": ${raw.slice(0, 200)}`);
-            }
-
-            return JSON.parse(raw);
-          })
+          .then((response) => response.json())
           .finally(() => {
             loading.style.display = 'none';
           });
