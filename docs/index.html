@@ -145,6 +145,31 @@
         color: orangered;
       }
 
+      #loading {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.55);
+        z-index: 9999;
+      }
+
+      #loadingCircle {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #d9d9d9;
+        border-top-color: #007bff;
+        border-radius: 50%;
+        animation: loading-spin 0.8s linear infinite;
+      }
+
+      @keyframes loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       /* レスポンシブデザイン */
       @media (max-width: 768px) {
         .tab-buttons button {
@@ -199,19 +224,44 @@
       </div>
     </div>
 
+    <div id="loading">
+      <div id="loadingCircle"></div>
+    </div>
+
     <script>
       // APIのエンドポイント
       const SCRIPT_ID = 'AKfycbwycU0NIM4IbmzXsE3ONb_6zXxJ2ig_dKs0170NNQFSzZKzM3RDsNyHn7xLfofjYrAX';
       const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
+      let loadingCount = 0;
+
+      function setLoadingVisible(visible) {
+        const loading = document.getElementById('loading');
+        if (!loading) return;
+        loading.style.display = visible ? 'flex' : 'none';
+      }
 
       // APIからデータを取得する関数
       function fetchData(action) {
         const url = new URL(apiBaseUrl);
         url.searchParams.append('action', action);
+        loadingCount += 1;
+        setLoadingVisible(true);
 
         return fetch(url)
           .then((response) => response.json())
-          .then((data) => data);
+          .then((data) => data)
+          .finally(() => {
+            loadingCount = Math.max(0, loadingCount - 1);
+            if (loadingCount === 0) {
+              setLoadingVisible(false);
+            }
+          });
+      }
+
+      function showMessage(sectionId, message) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        section.innerHTML = `<p style="padding:12px;font-weight:bold;">${message}</p>`;
       }
 
       // タブを切り替える関数
@@ -221,25 +271,42 @@
         document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
         document.getElementById(`${tab}-content`).classList.add('active');
 
-        if (tab === 'league') {
-          fetchData('getLeagues').then(displayLeagues);
-        } else if (tab === 'next-match') {
-          fetchData('getNextMatches').then(displayNextMatches);
-        } else if (tab === 'wins') {
-          fetchData('getPlayersByWins').then(displayPlayersByWins);
-        } else if (tab === 'revival-match') {
-          fetchData('getNextRevivalMatches').then(displayRevivalMatches);
-        } else if (tab === 'revival-wins') {
-          fetchData('getRevivalPlayersByWin').then(displayRevivalPlayersByWins);
-        } else if (tab === 'final-bracket') {
-          fetchData('getFinalBracketParticipants').then(displayFinalBracket);
-        }
+        const tabConfig = {
+          league: { action: 'getLeagues', display: displayLeagues, sectionId: 'league-section' },
+          'next-match': { action: 'getNextMatches', display: displayNextMatches, sectionId: 'next-match-section' },
+          wins: { action: 'getPlayersByWins', display: displayPlayersByWins, sectionId: 'wins-section' },
+          'revival-match': {
+            action: 'getNextRevivalMatches',
+            display: displayRevivalMatches,
+            sectionId: 'revival-match-section',
+          },
+          'revival-wins': {
+            action: 'getRevivalPlayersByWin',
+            display: displayRevivalPlayersByWins,
+            sectionId: 'revival-wins-section',
+          },
+          'final-bracket': {
+            action: 'getFinalBracketParticipants',
+            display: displayFinalBracket,
+            sectionId: 'final-bracket-section',
+          },
+        };
+
+        const config = tabConfig[tab];
+        if (!config) return;
+        fetchData(config.action)
+          .then((data) => config.display(data))
+          .catch(() => showMessage(config.sectionId, 'データの取得に失敗しました'));
       }
 
       // 各リーグのプレイヤー一覧を表示
       function displayLeagues(data) {
         const section = document.getElementById('league-section');
         section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('league-section', 'リーグデータがありません');
+          return;
+        }
 
         data.forEach((league) => {
           const column = document.createElement('div');
@@ -280,6 +347,10 @@
       function displayNextMatches(data) {
         const section = document.getElementById('next-match-section');
         section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('next-match-section', '次の試合データがありません');
+          return;
+        }
 
         // リーグごとにテーブルを作成
         const leagues = {}; // リーグ名をキーとして、試合のデータを格納するオブジェクト
@@ -328,6 +399,10 @@
       function displayPlayersByWins(data) {
         const section = document.getElementById('wins-section');
         section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('wins-section', '勝利数データがありません');
+          return;
+        }
 
         // リーグごとのデータを処理
         data.forEach((leagueData) => {
@@ -390,6 +465,10 @@
       function displayRevivalMatches(data) {
         const section = document.getElementById('revival-match-section');
         section.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('revival-match-section', '復活試合データがありません');
+          return;
+        }
 
         // データを半分に分ける
         const halfLength = Math.ceil(data.length / 2);
@@ -425,9 +504,17 @@
         console.log(data);
         const section = document.getElementById('revival-wins-section');
         section.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0 || !data[0] || !Array.isArray(data[0].winsData)) {
+          showMessage('revival-wins-section', '復活勝利数データがありません');
+          return;
+        }
 
         // ウィンデータをソート
         const revivalData = data[0].winsData;
+        if (revivalData.length === 0) {
+          showMessage('revival-wins-section', '復活勝利数データがありません');
+          return;
+        }
         revivalData.sort((a, b) => b.wins - a.wins);
 
         // データを半分に分ける
@@ -704,7 +791,9 @@
           }
         });
         canvas.addEventListener('click', () => {
-          if (!document.fullscreenElement) {
+          if (document.fullscreenElement === canvas) {
+            document.exitFullscreen();
+          } else if (!document.fullscreenElement) {
             canvas.requestFullscreen().catch((err) => console.error('Fullscreen error:', err));
           }
         });
