@@ -1,465 +1,813 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GCS試合情報</title>
+    <style>
+      /* 全画面表示、16:9のアスペクト比に合わせる */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GCS試合情報</title>
-  <style>
-    /* 全画面表示、16:9のアスペクト比に合わせる */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f4f4f4;
+      }
 
-    body {
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f4f4f4;
-    }
+      .container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 0px;
+        overflow: hidden;
+        background-color: #fff;
+      }
 
-    .container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      padding: 0px;
-      overflow: hidden;
-      background-color: #fff;
-    }
+      /* タブボタン */
+      .tab-buttons {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        background-color: #333;
+        padding: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 200;
+      }
 
-    /* タブボタン */
-    .tab-buttons {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      background-color: #333;
-      padding: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .tab-buttons button {
-      background-color: #444;
-      color: white;
-      padding: 10px 20px;
-      margin: 0 5px;
-      border: none;
-      border-radius: 5px;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .tab-buttons button:hover {
-      background-color: #555;
-    }
-
-    .tab-buttons button.active {
-      background-color: #007BFF;
-    }
-
-    /* タブ内容 */
-    .tab-content {
-      width: 100%;
-      height: calc(100% - 50px);
-      /* タブボタンの高さ分を除く */
-      padding: 5px;
-      overflow-y: auto;
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    /* 各セクションのスタイル */
-    .section {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      width: 100%;
-      margin: 10px 0;
-    }
-
-    .section .column {
-      width: 48%;
-      background-color: #f8f8f8;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2px;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: left;
-      font-weight: bold;
-      /* 文字を太字 */
-    }
-
-    #league-section td {
-      width: 50%;
-    }
-
-    th {
-      background-color: #f8f8f8;
-      color: orangered;
-    }
-
-    /* レスポンシブデザイン */
-    @media (max-width: 768px) {
       .tab-buttons button {
-        font-size: 14px;
-        padding: 8px 15px;
+        background-color: #444;
+        color: white;
+        padding: 10px 20px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .tab-buttons button:hover {
+        background-color: #555;
+      }
+
+      .tab-buttons button.active {
+        background-color: #007bff;
+      }
+
+      /* タブ内容 */
+      .tab-content {
+        width: 100%;
+        height: calc(100% - 50px);
+        /* タブボタンの高さ分を除く */
+        padding: 5px;
+        overflow-y: auto;
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* 各セクションのスタイル */
+      .section {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .section .column {
+        width: 48%;
+        background-color: #f8f8f8;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2px;
       }
 
       th,
       td {
-        font-size: 14px;
-        padding: 8px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+        font-weight: bold;
+        /* 文字を太字 */
       }
-    }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <!-- タブボタン -->
-    <div class="tab-buttons">
-      <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
-      <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
-      <button id="wins-button" onclick="switchTab('wins')">勝利数</button>
-      <button id="revival-match-button" onclick="switchTab('revival-match')">復活試合</button>
-      <button id="revival-wins-button" onclick="switchTab('revival-wins')">復活勝利数</button>
-    </div>
-
-    <!-- タブ内容 -->
-    <div class="tab-content active" id="league-content">
-      <div class="section" id="league-section"></div>
-    </div>
-
-    <div class="tab-content" id="next-match-content">
-      <div class="section" id="next-match-section"></div>
-    </div>
-
-    <div class="tab-content" id="wins-content">
-      <div class="section" id="wins-section"></div>
-    </div>
-
-    <div class="tab-content" id="revival-match-content">
-      <div class="section" id="revival-match-section"></div>
-    </div>
-
-    <div class="tab-content" id="revival-wins-content">
-      <div class="section" id="revival-wins-section"></div>
-    </div>
-  </div>
-
-  <script>
-    // APIのエンドポイント
-    const SCRIPT_ID = "AKfycbzN8K30zDAzY9NUUEsIEFVAN-emQRsnJfA545khnKdFTzpcPjNn0H6SPtZMFBguty4G";
-    const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
-
-    // APIからデータを取得する関数
-    function fetchData(action) {
-      const url = new URL(apiBaseUrl);
-      url.searchParams.append('action', action);
-
-      return fetch(url)
-        .then(response => response.json())
-        .then(data => data);
-    }
-
-    // タブを切り替える関数
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-buttons button').forEach(button => button.classList.remove('active'));
-      document.getElementById(`${tab}-button`).classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      document.getElementById(`${tab}-content`).classList.add('active');
-
-      if (tab === 'league') {
-        fetchData('getLeagues').then(displayLeagues);
-      } else if (tab === 'next-match') {
-        fetchData('getNextMatches').then(displayNextMatches);
-      } else if (tab === 'wins') {
-        fetchData('getPlayersByWins').then(displayPlayersByWins);
-      } else if (tab === 'revival-match') {
-        fetchData('getNextRevivalMatches').then(displayRevivalMatches);
-      } else if (tab === 'revival-wins') {
-        fetchData('getRevivalPlayersByWin').then(displayRevivalPlayersByWins);
+      #league-section td {
+        width: 50%;
       }
-    }
 
-    // 各リーグのプレイヤー一覧を表示
-    function displayLeagues(data) {
-      const section = document.getElementById('league-section');
-      section.innerHTML = ''; // 既存の内容をクリア
+      #final-bracket-section {
+        display: block;
+      }
 
-      data.forEach(league => {
-        const column = document.createElement('div');
-        column.classList.add('column');
-        const table = document.createElement('table');
+      .final-bracket-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
 
-        const leagueRow = document.createElement('tr');
-        const leagueCell = document.createElement('td');
-        leagueCell.textContent = league.league;
-        leagueRow.appendChild(leagueCell);
-        table.appendChild(leagueRow);
+      .final-bracket-controls label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: bold;
+      }
 
-        for (let i = 0; i < league.players.length; i += 2) {
-          const row = document.createElement('tr');
+      .final-bracket-canvas {
+        width: 100%;
+        height: 70vh;
+        border: 1px solid #ddd;
+        background: #fff;
+        cursor: pointer;
+      }
 
-          // 1つ目のプレイヤー
-          const playerCell1 = document.createElement('td');
-          playerCell1.textContent = league.players[i];
-          row.appendChild(playerCell1);
+      th {
+        background-color: #f8f8f8;
+        color: orangered;
+      }
 
-          // 2つ目のプレイヤー（i + 1 が存在する場合）
-          if (i + 1 < league.players.length) {
-            const playerCell2 = document.createElement('td');
-            playerCell2.textContent = league.players[i + 1];
-            row.appendChild(playerCell2);
+      #loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.55);
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      #loadingCircle {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #d9d9d9;
+        border-top-color: #007bff;
+        border-radius: 50%;
+        animation: loading-spin 0.8s linear infinite;
+      }
+
+      @keyframes loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* レスポンシブデザイン */
+      @media (max-width: 768px) {
+        .tab-buttons button {
+          font-size: 14px;
+          padding: 8px 15px;
+        }
+
+        th,
+        td {
+          font-size: 14px;
+          padding: 8px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- タブボタン -->
+      <div class="tab-buttons">
+        <button id="league-button" class="active" onclick="switchTab('league')">リーグ</button>
+        <button id="next-match-button" onclick="switchTab('next-match')">次の試合</button>
+        <button id="wins-button" onclick="switchTab('wins')">勝利数</button>
+        <button id="revival-match-button" onclick="switchTab('revival-match')">復活試合</button>
+        <button id="revival-wins-button" onclick="switchTab('revival-wins')">復活勝利数</button>
+        <button id="final-bracket-button" onclick="switchTab('final-bracket')">決勝表</button>
+      </div>
+
+      <!-- タブ内容 -->
+      <div class="tab-content active" id="league-content">
+        <div class="section" id="league-section"></div>
+      </div>
+
+      <div class="tab-content" id="next-match-content">
+        <div class="section" id="next-match-section"></div>
+      </div>
+
+      <div class="tab-content" id="wins-content">
+        <div class="section" id="wins-section"></div>
+      </div>
+
+      <div class="tab-content" id="revival-match-content">
+        <div class="section" id="revival-match-section"></div>
+      </div>
+
+      <div class="tab-content" id="revival-wins-content">
+        <div class="section" id="revival-wins-section"></div>
+      </div>
+
+      <div class="tab-content" id="final-bracket-content">
+        <div class="section" id="final-bracket-section"></div>
+      </div>
+    </div>
+
+    <div id="loading">
+      <div id="loadingCircle"></div>
+    </div>
+
+    <script>
+      // APIのエンドポイント
+      const SCRIPT_ID = 'AKfycbwycU0NIM4IbmzXsE3ONb_6zXxJ2ig_dKs0170NNQFSzZKzM3RDsNyHn7xLfofjYrAX';
+      const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
+      let loadingCount = 0;
+
+      function setLoadingVisible(visible) {
+        const loading = document.getElementById('loading');
+        if (!loading) return;
+        loading.style.display = visible ? 'flex' : 'none';
+      }
+
+      // APIからデータを取得する関数
+      function fetchData(action) {
+        const url = new URL(apiBaseUrl);
+        url.searchParams.append('action', action);
+        loadingCount += 1;
+        setLoadingVisible(true);
+
+        return fetch(url)
+          .then((response) => response.json())
+          .then((data) => data)
+          .finally(() => {
+            loadingCount = Math.max(0, loadingCount - 1);
+            if (loadingCount === 0) {
+              setLoadingVisible(false);
+            }
+          });
+      }
+
+      function showMessage(sectionId, message) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        section.innerHTML = `<p style="padding:12px;font-weight:bold;">${message}</p>`;
+      }
+
+      // タブを切り替える関数
+      function switchTab(tab) {
+        document.querySelectorAll('.tab-buttons button').forEach((button) => button.classList.remove('active'));
+        document.getElementById(`${tab}-button`).classList.add('active');
+        document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+        document.getElementById(`${tab}-content`).classList.add('active');
+
+        const tabConfig = {
+          league: { action: 'getLeagues', display: displayLeagues, sectionId: 'league-section' },
+          'next-match': { action: 'getNextMatches', display: displayNextMatches, sectionId: 'next-match-section' },
+          wins: { action: 'getPlayersByWins', display: displayPlayersByWins, sectionId: 'wins-section' },
+          'revival-match': {
+            action: 'getNextRevivalMatches',
+            display: displayRevivalMatches,
+            sectionId: 'revival-match-section',
+          },
+          'revival-wins': {
+            action: 'getRevivalPlayersByWin',
+            display: displayRevivalPlayersByWins,
+            sectionId: 'revival-wins-section',
+          },
+          'final-bracket': {
+            action: 'getFinalBracketParticipants',
+            display: displayFinalBracket,
+            sectionId: 'final-bracket-section',
+          },
+        };
+
+        const config = tabConfig[tab];
+        if (!config) return;
+        fetchData(config.action)
+          .then((data) => config.display(data))
+          .catch(() => showMessage(config.sectionId, 'データの取得に失敗しました'));
+      }
+
+      // 各リーグのプレイヤー一覧を表示
+      function displayLeagues(data) {
+        const section = document.getElementById('league-section');
+        section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('league-section', 'リーグデータがありません');
+          return;
+        }
+
+        data.forEach((league) => {
+          const column = document.createElement('div');
+          column.classList.add('column');
+          const table = document.createElement('table');
+
+          const leagueRow = document.createElement('tr');
+          const leagueCell = document.createElement('td');
+          leagueCell.textContent = league.league;
+          leagueRow.appendChild(leagueCell);
+          table.appendChild(leagueRow);
+
+          for (let i = 0; i < league.players.length; i += 2) {
+            const row = document.createElement('tr');
+
+            // 1つ目のプレイヤー
+            const playerCell1 = document.createElement('td');
+            playerCell1.textContent = league.players[i];
+            row.appendChild(playerCell1);
+
+            // 2つ目のプレイヤー（i + 1 が存在する場合）
+            if (i + 1 < league.players.length) {
+              const playerCell2 = document.createElement('td');
+              playerCell2.textContent = league.players[i + 1];
+              row.appendChild(playerCell2);
+            }
+
+            // 行をテーブルに追加
+            table.appendChild(row);
           }
 
-          // 行をテーブルに追加
-          table.appendChild(row);
+          column.appendChild(table);
+          section.appendChild(column);
+        });
+      }
+
+      // 次の試合情報を表示
+      function displayNextMatches(data) {
+        const section = document.getElementById('next-match-section');
+        section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('next-match-section', '次の試合データがありません');
+          return;
         }
 
-        column.appendChild(table);
-        section.appendChild(column);
-      });
-    }
+        // リーグごとにテーブルを作成
+        const leagues = {}; // リーグ名をキーとして、試合のデータを格納するオブジェクト
 
-    // 次の試合情報を表示
-    function displayNextMatches(data) {
-      const section = document.getElementById('next-match-section');
-      section.innerHTML = ''; // 既存の内容をクリア
+        // dataからリーグごとにデータを分類
+        data.forEach((match) => {
+          // リーグ名がまだない場合、リーグ用のテーブルを作成
+          if (!leagues[match.league]) {
+            leagues[match.league] = []; // 試合データを格納するための配列を作成
+          }
 
-      // リーグごとにテーブルを作成
-      const leagues = {}; // リーグ名をキーとして、試合のデータを格納するオブジェクト
+          // 試合データをリーグごとに追加
+          leagues[match.league].push(match);
+        });
 
-      // dataからリーグごとにデータを分類
-      data.forEach(match => {
-        // リーグ名がまだない場合、リーグ用のテーブルを作成
-        if (!leagues[match.league]) {
-          leagues[match.league] = []; // 試合データを格納するための配列を作成
+        // 各リーグごとのテーブルを作成
+        Object.keys(leagues).forEach((leagueName) => {
+          const column = document.createElement('div');
+          column.classList.add('column');
+          const table = document.createElement('table');
+
+          // リーグ名を表示
+          const leagueRow = document.createElement('tr');
+          const leagueCell = document.createElement('td');
+          leagueCell.textContent = leagueName;
+          leagueRow.appendChild(leagueCell);
+          table.appendChild(leagueRow);
+
+          // 各試合の組み合わせをテーブルに追加
+          leagues[leagueName].forEach((match) => {
+            const matchRow = document.createElement('tr');
+            const matchCell = document.createElement('td');
+            matchCell.textContent = `${match.player1} vs ${match.player2}`;
+            matchRow.appendChild(matchCell);
+            table.appendChild(matchRow);
+          });
+
+          // テーブルをカラムに追加
+          column.appendChild(table);
+          // セクションに追加
+          section.appendChild(column);
+        });
+      }
+
+      // 勝利数ごとのプレイヤーをリーグごとに表示
+      function displayPlayersByWins(data) {
+        const section = document.getElementById('wins-section');
+        section.innerHTML = ''; // 既存の内容をクリア
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('wins-section', '勝利数データがありません');
+          return;
         }
 
-        // 試合データをリーグごとに追加
-        leagues[match.league].push(match);
-      });
+        // リーグごとのデータを処理
+        data.forEach((leagueData) => {
+          const column = document.createElement('div');
+          column.classList.add('column');
 
-      // 各リーグごとのテーブルを作成
-      Object.keys(leagues).forEach(leagueName => {
-        const column = document.createElement('div');
-        column.classList.add('column');
-        const table = document.createElement('table');
+          // リーグ名のテーブル作成
+          const table = document.createElement('table');
 
-        // リーグ名を表示
-        const leagueRow = document.createElement('tr');
-        const leagueCell = document.createElement('td');
-        leagueCell.textContent = leagueName;
-        leagueRow.appendChild(leagueCell);
-        table.appendChild(leagueRow);
+          const leagueRow = document.createElement('tr');
+          const leagueCell = document.createElement('td');
+          leagueCell.textContent = leagueData.league; // リーグ名
+          leagueRow.appendChild(leagueCell);
+          table.appendChild(leagueRow);
 
-        // 各試合の組み合わせをテーブルに追加
-        leagues[leagueName].forEach(match => {
-          const matchRow = document.createElement('tr');
-          const matchCell = document.createElement('td');
-          matchCell.textContent = `${match.player1} vs ${match.player2}`;
-          matchRow.appendChild(matchCell);
-          table.appendChild(matchRow);
-        });
+          // 勝利数ごとに並べる
+          leagueData.winsData.sort((a, b) => b.wins - a.wins); // 勝利数を降順で並べ替え
 
-        // テーブルをカラムに追加
-        column.appendChild(table);
-        // セクションに追加
-        section.appendChild(column);
-      });
+          // 各勝利数に対応するプレイヤーを2列に分けて表示
+          leagueData.winsData.forEach((winData) => {
+            const row = document.createElement('tr');
 
-    }
+            // 勝利数の表示
+            const winsCell = document.createElement('td');
+            winsCell.textContent = `${winData.wins} 勝`;
+            row.appendChild(winsCell);
+            table.appendChild(row);
 
-    // 勝利数ごとのプレイヤーをリーグごとに表示
-    function displayPlayersByWins(data) {
-      const section = document.getElementById('wins-section');
-      section.innerHTML = ''; // 既存の内容をクリア
+            // プレイヤーを2列で並べる
+            const playersRow = document.createElement('tr');
 
-      // リーグごとのデータを処理
-      data.forEach(leagueData => {
-        const column = document.createElement('div');
-        column.classList.add('column');
+            // 左側の列
+            const leftCell = document.createElement('td');
+            leftCell.style.width = '50%'; // 左側の列の幅を50%
+            winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach((player) => {
+              const playerCell = document.createElement('p');
+              playerCell.textContent = player;
+              leftCell.appendChild(playerCell);
+            });
 
-        // リーグ名のテーブル作成
-        const table = document.createElement('table');
+            // 右側の列
+            const rightCell = document.createElement('td');
+            rightCell.style.width = '50%'; // 右側の列の幅を50%
+            winData.players.slice(Math.ceil(winData.players.length / 2)).forEach((player) => {
+              const playerCell = document.createElement('p');
+              playerCell.textContent = player;
+              rightCell.appendChild(playerCell);
+            });
 
-        const leagueRow = document.createElement('tr');
-        const leagueCell = document.createElement('td');
-        leagueCell.textContent = leagueData.league; // リーグ名
-        leagueRow.appendChild(leagueCell);
-        table.appendChild(leagueRow);
-
-        // 勝利数ごとに並べる
-        leagueData.winsData.sort((a, b) => b.wins - a.wins); // 勝利数を降順で並べ替え
-
-        // 各勝利数に対応するプレイヤーを2列に分けて表示
-        leagueData.winsData.forEach(winData => {
-          const row = document.createElement('tr');
-
-          // 勝利数の表示
-          const winsCell = document.createElement('td');
-          winsCell.textContent = `${winData.wins} 勝`;
-          row.appendChild(winsCell);
-          table.appendChild(row);
-
-          // プレイヤーを2列で並べる
-          const playersRow = document.createElement('tr');
-
-          // 左側の列
-          const leftCell = document.createElement('td');
-          leftCell.style.width = '50%'; // 左側の列の幅を50%
-          winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach(player => {
-            const playerCell = document.createElement('p');
-            playerCell.textContent = player;
-            leftCell.appendChild(playerCell);
+            playersRow.appendChild(leftCell);
+            playersRow.appendChild(rightCell);
+            table.appendChild(playersRow);
           });
 
-          // 右側の列
-          const rightCell = document.createElement('td');
-          rightCell.style.width = '50%'; // 右側の列の幅を50%
-          winData.players.slice(Math.ceil(winData.players.length / 2)).forEach(player => {
-            const playerCell = document.createElement('p');
-            playerCell.textContent = player;
-            rightCell.appendChild(playerCell);
+          column.appendChild(table);
+          section.appendChild(column);
+        });
+      }
+
+      function displayRevivalMatches(data) {
+        const section = document.getElementById('revival-match-section');
+        section.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('revival-match-section', '復活試合データがありません');
+          return;
+        }
+
+        // データを半分に分ける
+        const halfLength = Math.ceil(data.length / 2);
+        const firstHalf = data.slice(0, halfLength);
+        const secondHalf = data.slice(halfLength);
+
+        // 2つのカラムを一度に処理
+        [firstHalf, secondHalf].forEach((half, index) => {
+          const column = document.createElement('div');
+          column.classList.add('column');
+          const table = document.createElement('table');
+
+          const leagueRow = document.createElement('tr');
+          const leagueCell = document.createElement('td');
+          leagueCell.textContent = '敗者復活'; // テキストは共通
+          leagueRow.appendChild(leagueCell);
+          table.appendChild(leagueRow);
+
+          half.forEach((match) => {
+            const matchRow = document.createElement('tr');
+            const matchCell = document.createElement('td');
+            matchCell.textContent = `${match.player1} vs ${match.player2}`;
+            matchRow.appendChild(matchCell);
+            table.appendChild(matchRow);
           });
 
-          playersRow.appendChild(leftCell);
-          playersRow.appendChild(rightCell);
-          table.appendChild(playersRow);
+          column.appendChild(table);
+          section.appendChild(column);
         });
+      }
 
-        column.appendChild(table);
-        section.appendChild(column);
-      });
-    }
+      function displayRevivalPlayersByWins(data) {
+        console.log(data);
+        const section = document.getElementById('revival-wins-section');
+        section.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0 || !data[0] || !Array.isArray(data[0].winsData)) {
+          showMessage('revival-wins-section', '復活勝利数データがありません');
+          return;
+        }
 
+        // ウィンデータをソート
+        const revivalData = data[0].winsData;
+        if (revivalData.length === 0) {
+          showMessage('revival-wins-section', '復活勝利数データがありません');
+          return;
+        }
+        revivalData.sort((a, b) => b.wins - a.wins);
 
-    function displayRevivalMatches(data) {
-      const section = document.getElementById('revival-match-section');
-      section.innerHTML = '';
+        // データを半分に分ける
+        const halfLength = Math.ceil(revivalData.length / 2);
+        const firstHalf = revivalData.slice(0, halfLength);
+        const secondHalf = revivalData.slice(halfLength);
 
-      // データを半分に分ける
-      const halfLength = Math.ceil(data.length / 2);
-      const firstHalf = data.slice(0, halfLength);
-      const secondHalf = data.slice(halfLength);
+        // 2つのカラムを一度に処理
+        [firstHalf, secondHalf].forEach((half, index) => {
+          const column = document.createElement('div');
+          column.classList.add('column');
+          const table = document.createElement('table');
 
-      // 2つのカラムを一度に処理
-      [firstHalf, secondHalf].forEach((half, index) => {
-        const column = document.createElement('div');
-        column.classList.add('column');
-        const table = document.createElement('table');
+          const leagueRow = document.createElement('tr');
+          const leagueCell = document.createElement('td');
+          leagueCell.textContent = '敗者復活'; // テキストは共通
+          leagueRow.appendChild(leagueCell);
+          table.appendChild(leagueRow);
 
-        const leagueRow = document.createElement('tr');
-        const leagueCell = document.createElement('td');
-        leagueCell.textContent = '敗者復活';  // テキストは共通
-        leagueRow.appendChild(leagueCell);
-        table.appendChild(leagueRow);
+          half.forEach((winData) => {
+            const row = document.createElement('tr');
 
-        half.forEach(match => {
-          const matchRow = document.createElement('tr');
-          const matchCell = document.createElement('td');
-          matchCell.textContent = `${match.player1} vs ${match.player2}`;
-          matchRow.appendChild(matchCell);
-          table.appendChild(matchRow);
-        });
+            const winsCell = document.createElement('td');
+            winsCell.textContent = `${winData.wins} 勝`;
+            row.appendChild(winsCell);
+            table.appendChild(row);
 
-        column.appendChild(table);
-        section.appendChild(column);
-      });
-    }
+            const playersRow = document.createElement('tr');
+            const leftCell = document.createElement('td');
+            leftCell.style.width = '50%';
+            winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach((player) => {
+              const playerCell = document.createElement('p');
+              playerCell.textContent = player;
+              leftCell.appendChild(playerCell);
+            });
 
+            const rightCell = document.createElement('td');
+            rightCell.style.width = '50%';
+            winData.players.slice(Math.ceil(winData.players.length / 2)).forEach((player) => {
+              const playerCell = document.createElement('p');
+              playerCell.textContent = player;
+              rightCell.appendChild(playerCell);
+            });
 
-
-    function displayRevivalPlayersByWins(data) {
-      console.log(data);
-      const section = document.getElementById('revival-wins-section');
-      section.innerHTML = '';
-
-      // ウィンデータをソート
-      const revivalData = data[0].winsData;
-      revivalData.sort((a, b) => b.wins - a.wins);
-
-      // データを半分に分ける
-      const halfLength = Math.ceil(revivalData.length / 2);
-      const firstHalf = revivalData.slice(0, halfLength);
-      const secondHalf = revivalData.slice(halfLength);
-
-      // 2つのカラムを一度に処理
-      [firstHalf, secondHalf].forEach((half, index) => {
-        const column = document.createElement('div');
-        column.classList.add('column');
-        const table = document.createElement('table');
-
-        const leagueRow = document.createElement('tr');
-        const leagueCell = document.createElement('td');
-        leagueCell.textContent = '敗者復活';  // テキストは共通
-        leagueRow.appendChild(leagueCell);
-        table.appendChild(leagueRow);
-
-        half.forEach(winData => {
-          const row = document.createElement('tr');
-
-          const winsCell = document.createElement('td');
-          winsCell.textContent = `${winData.wins} 勝`;
-          row.appendChild(winsCell);
-          table.appendChild(row);
-
-          const playersRow = document.createElement('tr');
-          const leftCell = document.createElement('td');
-          leftCell.style.width = '50%';
-          winData.players.slice(0, Math.ceil(winData.players.length / 2)).forEach(player => {
-            const playerCell = document.createElement('p');
-            playerCell.textContent = player;
-            leftCell.appendChild(playerCell);
+            playersRow.appendChild(leftCell);
+            playersRow.appendChild(rightCell);
+            table.appendChild(playersRow);
           });
 
-          const rightCell = document.createElement('td');
-          rightCell.style.width = '50%';
-          winData.players.slice(Math.ceil(winData.players.length / 2)).forEach(player => {
-            const playerCell = document.createElement('p');
-            playerCell.textContent = player;
-            rightCell.appendChild(playerCell);
-          });
+          column.appendChild(table);
+          section.appendChild(column);
+        });
+      }
 
-          playersRow.appendChild(leftCell);
-          playersRow.appendChild(rightCell);
-          table.appendChild(playersRow);
+      // 初期データの取得と表示
+      window.onload = function () {
+        switchTab('league'); // 最初に表示するタブ
+      };
+
+      function displayFinalBracket(data) {
+        const section = document.getElementById('final-bracket-section');
+        section.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+          showMessage('final-bracket-section', '決勝表データがありません');
+          return;
+        }
+
+        const participants = data
+          .map((item, index) => ({
+            participantId: String(item.participantId || index + 1),
+            participantNickname: String(item.participantNickname || ''),
+            participantEntryNumber: item.participantEntryNumber || '',
+            orderNumber: Number(item.orderNumber) || index + 1,
+            currentRank: Math.max(1, Number(item.currentRank) || data.length),
+            maxRank: Number(item.maxRank) || 1,
+          }))
+          .sort((a, b) => a.orderNumber - b.orderNumber);
+
+        const controls = document.createElement('div');
+        controls.className = 'final-bracket-controls';
+
+        const ratioLabel = document.createElement('label');
+        ratioLabel.textContent = '画質';
+        const ratioRange = document.createElement('input');
+        ratioRange.type = 'range';
+        ratioRange.min = '1';
+        ratioRange.max = '4';
+        ratioRange.step = '1';
+        ratioRange.value = '1';
+        ratioLabel.appendChild(ratioRange);
+        controls.appendChild(ratioLabel);
+
+        const tableLabel = document.createElement('label');
+        const tableInput = document.createElement('input');
+        tableInput.type = 'checkbox';
+        tableInput.checked = true;
+        tableLabel.appendChild(tableInput);
+        tableLabel.appendChild(document.createTextNode('テーブル番号'));
+        controls.appendChild(tableLabel);
+
+        const fullButton = document.createElement('button');
+        fullButton.textContent = 'フルスクリーン';
+        controls.appendChild(fullButton);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'final-bracket-canvas';
+        canvas.width = 1400;
+        canvas.height = 900;
+
+        const redraw = () => {
+          const ratio = Number(ratioRange.value) || 1;
+          const showTableNumber = !!tableInput.checked;
+          const isSeparate = true;
+          const participantsLength = participants.length;
+          if (participantsLength === 0) return;
+
+          const power = Math.ceil(Math.log2(participantsLength));
+          const normalizedLength = Math.pow(2, power);
+          const drawParticipants = participants.slice();
+          while (drawParticipants.length < normalizedLength) {
+            drawParticipants.push({
+              participantId: `auto-bye-${drawParticipants.length + 1}`,
+              participantNickname: 'BYE',
+              participantEntryNumber: '',
+              orderNumber: drawParticipants.length + 1,
+              currentRank: normalizedLength,
+              maxRank: 1,
+            });
+          }
+
+          canvas.width = Math.max(1200, canvas.offsetWidth * ratio);
+          canvas.height = Math.max(700, Math.floor((canvas.width * 9) / 16));
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const levels = Math.log2(normalizedLength) + 1;
+          const canvasWidth = canvas.width;
+          const canvasHeight = canvas.height;
+          const groupSize = 4;
+          const yCount = isSeparate ? normalizedLength / 2 : normalizedLength;
+          const levelWidth = isSeparate ? canvasWidth / ((levels + 0.5) * 2 + 6) : canvasWidth / (levels + 3);
+          const trophySize = isSeparate ? levelWidth * 0.8 * 2 : levelWidth * 0.8;
+          const maxTextWidth = isSeparate ? levelWidth * 1.9 * 2 : levelWidth * 1.9;
+          const marginY = canvasHeight / yCount;
+          const ys = [];
+          let lastY = 0;
+          for (let i = 0; i < yCount; i++) {
+            lastY += i === 0 ? marginY / 2 : marginY;
+            ys.push(lastY);
+          }
+
+          ctx.strokeStyle = '#aaa';
+          ctx.lineWidth = canvasWidth / 280;
+
+          if (showTableNumber) {
+            const groupNum = Math.ceil(normalizedLength / groupSize);
+            if (isSeparate) {
+              const groupHeight = (canvasHeight / groupNum) * 2;
+              const fontSize = groupHeight / 2;
+              for (let i = 0; i < groupNum; i++) {
+                const isFromRight = i * 2 >= groupNum;
+                ctx.fillStyle = i % 2 === 0 ? '#f006' : '#00f6';
+                ctx.font = `${fontSize}px sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(
+                  `${i + 1}`,
+                  isFromRight ? canvasWidth - fontSize : 0,
+                  isFromRight ? groupHeight * (i + 0.5) - canvasHeight : groupHeight * (i + 0.5)
+                );
+              }
+            }
+          }
+
+          const drawBranches = (x, ysList) => {
+            const newYs = [];
+            for (let i = 0; i < ysList.length; i++) {
+              const y = ysList[i];
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(x + levelWidth, y);
+              ctx.stroke();
+
+              if (isSeparate) {
+                ctx.beginPath();
+                ctx.moveTo(canvasWidth - x, y);
+                ctx.lineTo(canvasWidth - x - levelWidth, y);
+                ctx.stroke();
+              }
+
+              if (ysList.length === 1) return;
+
+              if (i % 2 === 0) {
+                ctx.beginPath();
+                ctx.moveTo(x + levelWidth, y);
+                ctx.lineTo(x + levelWidth, ysList[i + 1]);
+                ctx.stroke();
+
+                if (isSeparate) {
+                  ctx.beginPath();
+                  ctx.moveTo(canvasWidth - x - levelWidth, y);
+                  ctx.lineTo(canvasWidth - x - levelWidth, ysList[i + 1]);
+                  ctx.stroke();
+                }
+                newYs.push((y + ysList[i + 1]) / 2);
+              }
+            }
+            drawBranches(x + levelWidth, newYs);
+          };
+
+          isSeparate ? drawBranches(levelWidth * 4, ys) : drawBranches(levelWidth * 2, ys);
+
+          drawParticipants.forEach((participant, index) => {
+            const isFromRight = isSeparate && index * 2 >= normalizedLength;
+            const y = isFromRight ? ys[index - normalizedLength / 2] : ys[index];
+            const text = `${participant.participantNickname}`;
+            const baseFontSize = normalizedLength >= 32 ? canvasWidth / 50 : canvasWidth / 28;
+
+            ctx.font = `${baseFontSize}px sans-serif`;
+            if (Math.floor(index / groupSize) % 2 === 0) {
+              ctx.fillStyle = participant.maxRank === 1 ? '#a00' : '#a006';
+            } else {
+              ctx.fillStyle = participant.maxRank === 1 ? '#00a' : '#00a6';
+            }
+            ctx.textAlign = isFromRight ? 'left' : 'right';
+            ctx.textBaseline = 'middle';
+
+            const textWidth = ctx.measureText(text).width;
+            if (textWidth > maxTextWidth) {
+              const scaleFactor = maxTextWidth / textWidth;
+              ctx.font = `${baseFontSize * scaleFactor}px sans-serif`;
+            }
+
+            const x = isFromRight ? canvasWidth - maxTextWidth : maxTextWidth;
+            ctx.fillText(text, x, y);
+
+            ctx.strokeStyle = '#f00';
+            const currentRank = Math.max(1, participant.currentRank || normalizedLength);
+            const depth = Math.max(0, Math.floor(Math.log2(normalizedLength / currentRank)));
+            let startY = y;
+            let startX = isSeparate ? levelWidth * 4 : levelWidth * 2;
+            if (isFromRight) startX = canvasWidth - startX;
+            for (let i = 0; i < depth; i++) {
+              if (i !== 0) {
+                const shouldGoDown = index % 2 ** i < 2 ** (i - 1);
+                const downUpLength = marginY * 2 ** (i - 2);
+                const finishY = shouldGoDown ? startY + downUpLength : startY - downUpLength;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX, finishY);
+                ctx.stroke();
+                startY = finishY;
+              }
+              ctx.beginPath();
+              ctx.moveTo(startX, startY);
+              const finishX = isFromRight ? startX - levelWidth : startX + levelWidth;
+              ctx.lineTo(finishX, startY);
+              ctx.stroke();
+              startX = finishX;
+            }
+          });
+        };
+
+        ratioRange.addEventListener('input', redraw);
+        tableInput.addEventListener('change', redraw);
+        fullButton.addEventListener('click', () => {
+          if (!document.fullscreenElement) {
+            canvas.requestFullscreen().catch((err) => console.error('Fullscreen error:', err));
+          } else {
+            document.exitFullscreen();
+          }
+        });
+        canvas.addEventListener('click', () => {
+          if (document.fullscreenElement === canvas) {
+            document.exitFullscreen();
+          } else if (!document.fullscreenElement) {
+            canvas.requestFullscreen().catch((err) => console.error('Fullscreen error:', err));
+          }
         });
 
-        column.appendChild(table);
-        section.appendChild(column);
-      });
-    }
-
-
-
-    // 初期データの取得と表示
-    window.onload = function () {
-      switchTab('league'); // 最初に表示するタブ
-    };
-  </script>
-</body>
-
+        section.appendChild(controls);
+        section.appendChild(canvas);
+        redraw();
+      }
+    </script>
+  </body>
 </html>
