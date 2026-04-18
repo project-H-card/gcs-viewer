@@ -236,7 +236,7 @@
 
     <script>
       // APIのエンドポイント
-      const SCRIPT_ID = 'AKfycbwycU0NIM4IbmzXsE3ONb_6zXxJ2ig_dKs0170NNQFSzZKzM3RDsNyHn7xLfofjYrAX';
+      const SCRIPT_ID = 'AKfycby-QQ9uKl6VwvKdFhrCE2ZWZWLRf-wJfUbvWMDSpBvsOfrWmAE-PUIJ7JJzLQuSLfa-EQ';
       const apiBaseUrl = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
       let loadingCount = 0;
 
@@ -255,7 +255,10 @@
 
         return fetch(url)
           .then((response) => response.json())
-          .then((data) => data)
+          .then((data) => {
+            console.log(`Fetched data for action: ${action}`, data);
+            return data;
+          })
           .finally(() => {
             loadingCount = Math.max(0, loadingCount - 1);
             if (loadingCount === 0) {
